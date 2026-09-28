@@ -181,8 +181,8 @@ function Workspace({ user, setUser }) {
 
       {/* Top bar + status: always visible */}
       <header className="sticky top-0 z-20 border-b border-hairline bg-paper/95 pt-[env(safe-area-inset-top)] shadow-subtle backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-[960px] items-center gap-3 px-4 sm:px-6 md:h-16">
-          <h1 className="text-heading-sm">{currentPage.label}</h1>
+        <div className="mx-auto flex h-14 max-w-[1008px] items-center gap-3 px-4 sm:px-6 md:h-16">
+          <h1 className="text-heading-sm tracking-[-0.01em]">{currentPage.label}</h1>
           <span className="hidden text-sm text-ash sm:inline">{dateLabel}</span>
           <div className="ml-auto flex items-center gap-2">
             {activePage === 'today' && !isAdding && today?.habits.length > 0 && (
@@ -192,20 +192,20 @@ function Workspace({ user, setUser }) {
               </button>
             )}
             <button onClick={() => goTo('settings')} aria-label={`Account: ${user.name}`} className="rounded-md md:hidden">
-              <Avatar name={user.name} />
+              <Avatar name={user.name} className="h-9 w-9 text-sm" />
             </button>
           </div>
         </div>
         {today && (
           <div className="border-t border-hairline">
-            <div className="mx-auto max-w-[960px] px-4 sm:px-6">
+            <div className="mx-auto max-w-[1008px] px-4 sm:px-6">
               <StatusBar today={today} onAction={actions.placement} onAddHabit={startAdding} />
             </div>
           </div>
         )}
       </header>
 
-      <main className="mx-auto max-w-[960px] px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 md:pb-12">
+      <main className="mx-auto max-w-[1008px] px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 md:pb-12">
         {error && (
           <div role="alert" className="card mb-4 flex items-center gap-3 border-ink p-3 sm:p-4">
             <p className="flex-1 text-sm">{error}</p>

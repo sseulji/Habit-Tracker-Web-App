@@ -15,7 +15,7 @@ function StatusBar({ today, onAction, onAddHabit }) {
   let action = null;
   if (today.habits.length === 0) {
     text = <span className="text-ash">No habits yet</span>;
-    action = <button onClick={onAddHabit} className="btn btn-primary btn-sm shrink-0 px-4">Add habit</button>;
+    action = <button onClick={onAddHabit} className="btn btn-primary btn-sm shrink-0 px-3.5 sm:px-4">Add habit</button>;
   } else if (allDone) {
     text = <>All done <span className="text-ash">· longest streak {longest} {longest === 1 ? 'day' : 'days'}</span></>;
   } else if (next && habit && next.start != null) {
@@ -28,14 +28,14 @@ function StatusBar({ today, onAction, onAddHabit }) {
     );
     action = (
       <button onClick={() => onAction(next.id, isMin ? 'min' : 'done')} aria-label={`Mark done: ${habit.name}`}
-        className="btn btn-primary btn-sm shrink-0 px-4">
+        className="btn btn-primary btn-sm shrink-0 px-3.5 sm:px-4">
         Mark done
       </button>
     );
   } else if (next && habit && next.mode === 'rest') {
     text = <><span className="text-ash">No time today: </span>{habit.name}</>;
     action = next.restAvailable && (
-      <button onClick={() => onAction(next.id, 'rest')} className="btn btn-primary btn-sm shrink-0 px-4">Take rest day</button>
+      <button onClick={() => onAction(next.id, 'rest')} className="btn btn-primary btn-sm shrink-0 px-3.5 sm:px-4">Take rest day</button>
     );
   } else if (total === 0) {
     text = <span className="text-ash">Nothing scheduled today</span>;

@@ -87,40 +87,40 @@ function PlacementCard({ placement, habit, isNext, onAction, onSetTime, onEdit, 
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-input border text-xl transition-colors duration-300 ease-out ${
               done ? 'border-ink bg-highlighter text-ink' : 'border-hairline bg-bone hover:border-ink'
             }`}>
-            {done ? (
+            {done && (
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 10.5l4 4 8-9" /></svg>
-            ) : (
-              <span aria-hidden="true" className="grayscale opacity-70">{habit.icon || '○'}</span>
             )}
           </button>
         ) : (
           <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-input border border-dashed border-smoke text-ash">–</span>
         )}
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {/* Phones stack the time under the name; wider screens keep them on one line */}
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3">
             <p className={`break-words ${done ? 'text-ash line-through' : 'text-ink'}`}>{habit.name}</p>
             {placement.start != null && (
               <span className="text-sm tabular-nums text-ash">{range(placement.start, placement.end)} · {length} min</span>
             )}
           </div>
           {badges.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {badges.map(b => <span key={b} className="rounded-md bg-bone px-2 py-0.5 text-caption uppercase tracking-wider text-ink">{b}</span>)}
+            <div className="flex flex-wrap gap-1 pt-0.5">
+              {badges.map(b => <span key={b} className="rounded-md bg-bone px-2 py-0.5 text-caption leading-4 uppercase tracking-wider text-ink">{b}</span>)}
             </div>
           )}
-          {placement.reason && !done && <p className="mt-1.5 text-sm text-ash">{placement.reason}</p>}
-          <p className="mt-1 text-sm text-ash">
+          {placement.reason && !done && <p className="text-sm text-ash">{placement.reason}</p>}
+          <p className="hidden text-sm text-ash sm:block">
             {habit.streak} {habit.streak === 1 ? 'day' : 'days'} streak
             {habit.description && <> · {habit.description}</>}
+            {placement.mode === 'rest' && placement.restAvailable && !done && <> · a rest day keeps it going</>}
           </p>
 
           {!done && (placement.conflict || placement.canUndo || placement.mode === 'rest' || placement.mode === 'missed') && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 pt-1.5">
               {placement.conflict && <button onClick={() => onAction(placement.id, 'auto')} className="btn btn-outline btn-sm">Move it for me</button>}
               {placement.mode === 'rest' && placement.restAvailable && <button onClick={() => onAction(placement.id, 'rest')} className="btn btn-outline btn-sm">Take rest day</button>}
               {!scheduled && <button onClick={() => setPicking(true)} className="btn btn-outline btn-sm">Pick a time</button>}
-              {placement.canUndo && scheduled && <button onClick={() => onAction(placement.id, 'undo')} className="btn btn-ghost btn-sm">Undo change</button>}
+              {placement.canUndo && scheduled && <button onClick={() => onAction(placement.id, 'undo')} className="btn btn-sm bg-bone px-3 hover:bg-hairline">Undo change</button>}
             </div>
           )}
           {picking && <TimePicker initial={placement.start} onCancel={() => setPicking(false)} onSave={(m) => { setPicking(false); onSetTime(placement.id, m); }} />}
@@ -152,7 +152,7 @@ function AddMeeting({ now, onAdd }) {
   };
 
   if (!open) {
-    return <button onClick={openForm} className="btn btn-ghost btn-sm px-2 text-ink">+ Add a meeting</button>;
+    return <button onClick={openForm} className="btn btn-ghost -mx-2 h-6 px-2 text-sm text-ink">+ Add a meeting</button>;
   }
   return (
     <form className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-hairline bg-paper p-3"
@@ -231,7 +231,7 @@ function Today({ today, isAdding, onCloseAdd, onAddHabit, onAction, onSetTime, o
 
   const nowMarker = (
     <li key="now" className="flex items-center gap-3 px-1 py-1" aria-label={`Now, ${formatTime(today.now)}`}>
-      <span className="text-caption uppercase tracking-wider tabular-nums">Now {formatTime(today.now)}</span>
+      <span className="text-caption leading-4 uppercase tracking-wider tabular-nums">Now {formatTime(today.now)}</span>
       <span aria-hidden="true" className="h-px flex-1 bg-ink" />
     </li>
   );
@@ -249,10 +249,7 @@ function Today({ today, isAdding, onCloseAdd, onAddHabit, onAction, onSetTime, o
 
       {today.habits.length > 0 && (
         <section aria-label="Today's schedule">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
-            <p className="text-sm text-ash">
-              {today.calendar === 'demo' ? 'Demo calendar' : 'Busy times you added'} · busy time is kept clear with a 10-minute buffer
-            </p>
+          <div className="mb-2 flex px-1 sm:mb-3">
             <AddMeeting now={today.now} onAdd={onAddBusy} />
           </div>
 
@@ -260,12 +257,14 @@ function Today({ today, isAdding, onCloseAdd, onAddHabit, onAction, onSetTime, o
             {timed.map((item, i) => [
               i === nowIndex && nowMarker,
               item.kind === 'busy' ? (
-                <li key={item.key} className="flex items-center gap-3 rounded-xl border border-dashed border-smoke px-4 py-2 text-sm text-ash">
-                  <span className="tabular-nums">{range(item.start, item.end)}</span>
+                <li key={item.key} className={`flex h-9 items-center gap-4 rounded-xl border border-dashed border-smoke pl-4 text-sm text-ash ${
+                  item.busy.source === 'added' ? 'pr-2' : 'pr-4'
+                }`}>
+                  <span className="w-24 shrink-0 tabular-nums">{range(item.start, item.end)}</span>
                   <span className="flex-1">Busy{item.busy.source === 'added' ? ' · added' : ''}</span>
                   {item.busy.source === 'added' && (
                     <button onClick={() => onRemoveBusy(item.busy.id)} aria-label={`Remove meeting ${range(item.start, item.end)}`}
-                      className="btn btn-ghost btn-sm h-7 w-7 px-0">×</button>
+                      className="btn btn-ghost h-7 w-7 shrink-0 px-0 text-ink">×</button>
                   )}
                 </li>
               ) : (
@@ -279,7 +278,7 @@ function Today({ today, isAdding, onCloseAdd, onAddHabit, onAction, onSetTime, o
 
       {untimed.length > 0 && (
         <section aria-label="No time today" className="space-y-2">
-          <h2 className="eyebrow px-1 pt-2">No time today</h2>
+          <h2 className="eyebrow px-1 pt-2">No time</h2>
           <ul className="space-y-2">{untimed.map(p => <li key={p.id}>{renderHabit(p)}</li>)}</ul>
         </section>
       )}
