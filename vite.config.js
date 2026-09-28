@@ -29,9 +29,21 @@ function browserServer() {
   }
 }
 
+// Every other build talks to the real server: the in-page server is never loaded, so keep
+// its (Node-only) import graph out of the bundle.
+function noBrowserServer() {
+  const stub = '\0browser-server-stub'
+  return {
+    name: 'no-browser-server',
+    enforce: 'pre',
+    resolveId: (source) => (source === './browser-server/index.js' ? stub : null),
+    load: (id) => (id === stub ? 'export function handle() { throw new Error("Only in the browser-only build") }' : null),
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss(), mode === 'pages' && browserServer()].filter(Boolean),
+  plugins: [react(), tailwindcss(), mode === 'pages' ? browserServer() : noBrowserServer()],
   base: '/Habit-Tracker-Web-App/',
   build: mode === 'pages' ? { target: 'es2022' } : undefined,
   server: {
