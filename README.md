@@ -77,6 +77,10 @@ Data lives in `data/habits.db` (git-ignored). Push notification keys are generat
 
 > **Note:** the calendar-aware version needs its Node server (sign-in, planning, push). GitHub Pages only hosts static files, so a Pages deploy of this branch shows the sign-in screen but can't reach the API. Deploy it to a Node host instead (`npm run build && npm start`, HTTPS required for push).
 
+### Render (Node hosting)
+
+`render.yaml` describes the service. In Render: **New → Blueprint → pick this repository → Apply**. The app is then at `https://<service>.onrender.com/Habit-Tracker-Web-App/` and redeploys on every push to `main`. On the free plan the disk is not persistent: accounts and habits reset when the service restarts or redeploys (attach a disk and set `DB_FILE` to keep them).
+
 The original version was deployed to GitHub Pages using GitHub Actions.
 
 **Live Demo**: [https://theunknown550.github.io/Habit-Tracker-Web-App/](https://theunknown550.github.io/Habit-Tracker-Web-App/)

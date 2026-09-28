@@ -52,6 +52,9 @@ function publicUser(u) {
 
 // ---------- auth ----------
 
+// For the host's health check (no session needed).
+api.get('/health', (req, res) => res.json({ ok: true }));
+
 // Demo sign-in by name. Google sign-in replaces this once an OAuth client is configured.
 api.post('/auth/demo', h((req, res) => {
   const name = text(req.body?.name, 'name', 40);

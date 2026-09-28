@@ -1,0 +1,14 @@
+# Render Blueprint: one Node web service serving the API and the built app.
+# Render → New → Blueprint → pick this repository.
+services:
+  - type: web
+    name: habit-tracker
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
