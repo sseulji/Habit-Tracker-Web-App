@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api';
+import { api, isBrowserOnly } from '../api';
 import { browserTimeZone } from '../time';
 
 function SignIn({ onSignedIn }) {
@@ -58,7 +58,9 @@ function SignIn({ onSignedIn }) {
         </div>
 
         <p className="mt-4 text-sm text-ash">
-          A demo account is just a name — anyone who types it can open it. Habits are stored on this app’s server.
+          {isBrowserOnly
+            ? 'This web version keeps everything in this browser only — nothing is sent to a server.'
+            : 'A demo account is just a name — anyone who types it can open it. Habits are stored on this app’s server.'}
         </p>
       </div>
     </div>

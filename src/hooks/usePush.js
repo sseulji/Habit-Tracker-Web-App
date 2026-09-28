@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '../api';
+import { api, isBrowserOnly } from '../api';
 
-const supported = typeof window !== 'undefined'
-  && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+// The browser-only build shows notifications from the page itself, so it needs no PushManager.
+const supported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'Notification' in window
+  && (isBrowserOnly || 'PushManager' in window);
 
 function urlBase64ToUint8Array(base64) {
   const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
@@ -17,6 +18,7 @@ function usePush() {
   const refresh = useCallback(async () => {
     if (!supported) return;
     if (Notification.permission === 'denied') return setStatus('denied');
+    if (isBrowserOnly) return setStatus(Notification.permission === 'granted' ? 'on' : 'off');
     const reg = await navigator.serviceWorker.getRegistration();
     const sub = reg && await reg.pushManager.getSubscription();
     setStatus(sub ? 'on' : 'off');
@@ -34,6 +36,7 @@ function usePush() {
         setStatus(permission === 'denied' ? 'denied' : 'off');
         return;
       }
+      if (isBrowserOnly) return setStatus('on');
       const reg = await navigator.serviceWorker.ready;
       const { publicKey } = await api.get('/push/key');
       const sub = await reg.pushManager.getSubscription()

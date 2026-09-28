@@ -6,7 +6,17 @@ export class ApiError extends Error {
   }
 }
 
+// The GitHub Pages build has no server: the same server code runs inside the page instead.
+export const isBrowserOnly = import.meta.env.VITE_BACKEND === 'browser';
+
 async function request(method, path, body) {
+  if (isBrowserOnly) {
+    const { handle } = await import('./browser-server/index.js');
+    const { status, data } = await handle(method, path, body);
+    if (status >= 400) throw new ApiError(status, data?.error || `Request failed (${status})`);
+    return data;
+  }
+
   const res = await fetch(`/api${path}`, {
     method,
     headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,

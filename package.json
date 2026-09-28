@@ -11,13 +11,15 @@
     "dev:web": "vite",
     "server": "node server/index.js",
     "start": "node server/index.js",
-    "test": "node --test \"server/**/*.test.js\""
+    "test": "node --test \"server/**/*.test.js\"",
+    "build:pages": "vite build --mode pages"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
     "express": "^5.2.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "sql.js": "^1.14.2",
     "tailwindcss": "^4.1.14",
     "web-push": "^3.6.7"
   },

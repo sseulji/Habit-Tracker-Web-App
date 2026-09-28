@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api';
+import { api, isBrowserOnly } from '../api';
 import Avatar from './Avatar';
 import DataExport from './DataExport';
 import usePush from '../hooks/usePush';
@@ -78,7 +78,7 @@ function Settings({ user, installApp, onUpdateUser, onSignOut, onDataChanged }) 
     unsupported: 'This browser can’t receive push notifications. Everything still shows below and on Today.',
     denied: 'Blocked in your browser settings. Allow notifications for this site to turn them on.',
     off: 'Get reminders with Done and In 30 min buttons. On iPhone, add the app to your Home Screen first.',
-    on: 'On for this device.',
+    on: isBrowserOnly ? 'On. Reminders appear while this app is open in the browser.' : 'On for this device.',
   }[push.status];
 
   return (
@@ -91,7 +91,7 @@ function Settings({ user, installApp, onUpdateUser, onSignOut, onDataChanged }) 
           <Avatar name={user.name} className="h-10 w-10" />
           <div className="min-w-[12rem] flex-1">
             <p className="truncate">{user.name}</p>
-            <p className="text-sm text-ash">Demo sign-in · {user.tz}</p>
+            <p className="text-sm text-ash">{isBrowserOnly ? 'Saved in this browser' : 'Demo sign-in'} · {user.tz}</p>
           </div>
           <button onClick={onSignOut} className="btn btn-outline btn-sm">Sign out</button>
         </div>
@@ -122,7 +122,7 @@ function Settings({ user, installApp, onUpdateUser, onSignOut, onDataChanged }) 
 
       <Section id="notify-label" title="Notifications">
         <Row label="Push on this device" detail={push.error || pushDetail}>
-          {push.status === 'on' && <button onClick={push.disable} className="btn btn-outline btn-sm">Turn off</button>}
+          {push.status === 'on' && !isBrowserOnly && <button onClick={push.disable} className="btn btn-outline btn-sm">Turn off</button>}
           {push.status === 'off' && <button onClick={push.enable} className="btn btn-outline btn-sm">Turn on</button>}
         </Row>
         <Row label="Morning plan" detail="Today’s placed habits, once.">

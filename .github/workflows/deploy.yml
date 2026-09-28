@@ -25,14 +25,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: npm run build:pages   # browser-only build: no server on Pages
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

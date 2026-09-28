@@ -75,7 +75,9 @@ Data lives in `data/habits.db` (git-ignored). Push notification keys are generat
 
 ## 🌐 Deployment
 
-> **Note:** the calendar-aware version needs its Node server (sign-in, planning, push). GitHub Pages only hosts static files, so a Pages deploy of this branch shows the sign-in screen but can't reach the API. Deploy it to a Node host instead (`npm run build && npm start`, HTTPS required for push).
+**Live (browser-only): https://sseulji.github.io/Habit-Tracker-Web-App/**
+
+GitHub Pages can't run the Node server, so `npm run build:pages` builds a browser-only version: the same server code (`server/routes.js`, `service.js`, `planner.js`, `jobs.js`) runs inside the page on SQLite compiled to WebAssembly ([sql.js](https://github.com/sql-js/sql.js)), with its data kept in that browser. Reminders show while the app is open; there is no push when it's closed. The full version with a server deploys to a Node host (below).
 
 ### Render (Node hosting)
 

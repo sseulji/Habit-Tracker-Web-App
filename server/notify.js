@@ -2,9 +2,7 @@
 // can show it (Settings → Notifications) even where push isn't available.
 import webpush from 'web-push';
 import { one, all, run, getMeta, setMeta } from './db.js';
-import { habitsOf, isDue, nowFor } from './service.js';
-
-const DAY = 24 * 60 * 60 * 1000;
+import { logNotification, markDelivered, recentNotifications } from './notify-core.js';
 
 function vapidKeys() {
   let keys = getMeta('vapid');
@@ -19,6 +17,7 @@ const keys = vapidKeys();
 webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:habits@example.com', keys.publicKey, keys.privateKey);
 
 export const publicKey = keys.publicKey;
+export { recentNotifications };
 
 export function subscribe(user, subscription) {
   run(`INSERT INTO push_subscriptions (endpoint, user_id, keys) VALUES (?, ?, ?)
@@ -32,26 +31,13 @@ export function unsubscribe(user, endpoint) {
 
 export const hasSubscription = (user) => Boolean(one('SELECT 1 x FROM push_subscriptions WHERE user_id = ?', user.id));
 
-// Daily cap: habits due today + 2. A user who hasn't reacted for 3 days only gets the morning plan.
-function allowed(user, kind, date, at) {
-  if (kind === 'test') return true;
-  const inactive = user.last_active_at && at - user.last_active_at > 3 * DAY;
-  if (inactive && kind !== 'morning') return false;
-  const cap = habitsOf(user).filter(h => isDue(h, date)).length + 2;
-  const sent = one(`SELECT COUNT(*) n FROM notifications WHERE user_id = ? AND date = ? AND kind != 'test'`, user.id, date).n;
-  return sent < cap;
-}
-
 /**
  * payload: { kind, title, body, placementId?, actions?: [{ action, title }] }
  * Returns true when logged (whether or not a device received it).
  */
 export async function notify(user, payload, at = Date.now()) {
-  const { date } = nowFor(user, at);
-  if (!allowed(user, payload.kind, date, at)) return false;
-
-  const id = run(`INSERT INTO notifications (user_id, date, kind, title, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    user.id, date, payload.kind, payload.title, payload.body, at).lastInsertRowid;
+  const id = logNotification(user, payload, at);
+  if (id == null) return false;
 
   const subs = all('SELECT * FROM push_subscriptions WHERE user_id = ?', user.id);
   let delivered = false;
@@ -64,11 +50,6 @@ export async function notify(user, payload, at = Date.now()) {
       else console.error('push failed:', error.statusCode || error.message);
     }
   }));
-  if (delivered) run('UPDATE notifications SET delivered = 1 WHERE id = ?', id);
+  if (delivered) markDelivered(id);
   return true;
-}
-
-export function recentNotifications(user, limit = 20) {
-  return all('SELECT id, kind, title, body, delivered, created_at createdAt FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT ?', user.id, limit)
-    .map(n => ({ ...n, delivered: Boolean(n.delivered) }));
 }
