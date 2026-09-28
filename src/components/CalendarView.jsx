@@ -57,46 +57,35 @@ function CalendarView({ completions, habits }) {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+  const statusLabels = {
+    full: 'all habits completed',
+    partial: 'some habits completed',
+    none: 'no habits completed',
+  };
 
   return (
-    <div className="mb-6 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <div className="text-2xl mr-3">📅</div>
-          <h2 className="text-2xl font-semibold text-gray-800">Calendar View</h2>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => navigateMonth(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-          >
+    <div className="card">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+        <p className="text-subheading" aria-live="polite">
+          {monthNames[currentDate.getMonth()]} <span className="text-ash">{currentDate.getFullYear()}</span>
+        </p>
+        <div className="flex items-center gap-1">
+          <button onClick={() => navigateMonth(-1)} aria-label="Previous month" className="btn btn-ghost btn-sm w-9 px-0">
             ←
           </button>
-          <button
-            onClick={goToToday}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 text-sm"
-          >
+          <button onClick={goToToday} className="btn btn-outline btn-sm">
             Today
           </button>
-          <button
-            onClick={() => navigateMonth(1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-          >
+          <button onClick={() => navigateMonth(1)} aria-label="Next month" className="btn btn-ghost btn-sm w-9 px-0">
             →
           </button>
         </div>
       </div>
 
-      <div className="mb-4 text-center">
-        <h3 className="text-xl font-semibold text-gray-700">
-          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-        </h3>
-      </div>
-
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1 mb-4">
+      <div className="mb-4 grid grid-cols-7 gap-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+          <div key={day} className="eyebrow pb-2 pl-1 sm:pl-2">
             {day}
           </div>
         ))}
@@ -108,25 +97,24 @@ function CalendarView({ completions, habits }) {
           return (
             <div
               key={index}
-              className={`aspect-square p-1 flex items-center justify-center text-sm relative ${
-                date ? 'cursor-pointer hover:bg-gray-50' : ''
-              }`}
+              title={date ? `${date.toDateString()}: ${statusLabels[status]}` : undefined}
+              className={`relative aspect-square rounded-md p-1 text-sm sm:p-2 ${
+                !date ? '' :
+                status === 'full' ? 'bg-highlighter' : 'hover:bg-bone'
+              } ${isToday ? 'ring-1 ring-ink ring-inset' : ''} transition-colors duration-300 ease-out`}
             >
               {date && (
                 <>
-                  <span className={`font-medium ${isToday ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>
+                  <span className={isToday ? 'text-ink' : status === 'full' ? 'text-ink' : 'text-ink/80'}>
                     {date.getDate()}
                   </span>
-                  {status && (
-                    <div
-                      className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${
-                        status === 'full' ? 'bg-green-500' :
-                        status === 'partial' ? 'bg-yellow-500' : 'bg-gray-300'
+                  {status !== 'full' && (
+                    <span
+                      aria-hidden="true"
+                      className={`absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full sm:bottom-2 sm:right-2 ${
+                        status === 'partial' ? 'bg-highlighter ring-1 ring-ink' : 'bg-smoke'
                       }`}
                     />
-                  )}
-                  {isToday && (
-                    <div className="absolute inset-0 border-2 border-blue-500 rounded-lg" />
                   )}
                 </>
               )}
@@ -136,18 +124,22 @@ function CalendarView({ completions, habits }) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center space-x-6 text-sm">
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 border-t border-hairline pt-4 text-sm text-ash sm:flex sm:flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="block h-4 w-4 rounded-md bg-highlighter" />
           <span>All habits completed</span>
         </div>
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+        <div className="flex items-center gap-2">
+          <span className="block h-2 w-2 rounded-full bg-highlighter ring-1 ring-ink" />
           <span>Some habits completed</span>
         </div>
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-gray-300 rounded-full mr-2"></div>
+        <div className="flex items-center gap-2">
+          <span className="block h-2 w-2 rounded-full bg-smoke" />
           <span>No habits completed</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="block h-4 w-4 rounded-md ring-1 ring-ink ring-inset" />
+          <span>Today</span>
         </div>
       </div>
     </div>

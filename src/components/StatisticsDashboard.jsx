@@ -25,7 +25,6 @@ function StatisticsDashboard({ habits, completions }) {
   });
 
   const longestCurrentStreak = Math.max(...currentStreaks, 0);
-  const totalCurrentStreaks = currentStreaks.reduce((sum, streak) => sum + streak, 0);
 
   // Monthly completion rate
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -58,86 +57,84 @@ function StatisticsDashboard({ habits, completions }) {
 
   const topHabits = habitStats.slice(0, 3);
 
+  const metrics = [
+    { label: 'Total habits', value: totalHabits },
+    { label: 'Active habits', value: activeHabits },
+    { label: 'Longest streak', value: longestCurrentStreak, unit: longestCurrentStreak === 1 ? 'day' : 'days' },
+    { label: 'Monthly avg', value: `${monthlyCompletionRate}%` },
+  ];
+
   return (
-    <div className="mb-6 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
-      <div className="flex items-center mb-6">
-        <div className="text-2xl mr-3">📊</div>
-        <h2 className="text-2xl font-semibold text-gray-800">Statistics Dashboard</h2>
-      </div>
-
+    <div className="space-y-4">
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-          <div className="text-2xl font-bold text-blue-600">{totalHabits}</div>
-          <div className="text-sm text-blue-800">Total Habits</div>
-        </div>
+      <dl className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+        {metrics.map(metric => (
+          <div key={metric.label} className="rounded-xl border border-hairline bg-paper p-4">
+            <dt className="eyebrow">{metric.label}</dt>
+            <dd className="mt-2 text-heading tabular-nums">
+              {metric.value}
+              {metric.unit && <span className="ml-1 text-sm tracking-normal text-ash">{metric.unit}</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-          <div className="text-2xl font-bold text-green-600">{activeHabits}</div>
-          <div className="text-sm text-green-800">Active Habits</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
-          <div className="text-2xl font-bold text-orange-600">{longestCurrentStreak}</div>
-          <div className="text-sm text-orange-800">Longest Streak</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
-          <div className="text-2xl font-bold text-purple-600">{monthlyCompletionRate}%</div>
-          <div className="text-sm text-purple-800">Monthly Avg</div>
-        </div>
-      </div>
-
-      {/* Top Performing Habits */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">🏆 Top Performing Habits</h3>
-        <div className="space-y-3">
-          {topHabits.map((habit, index) => (
-            <div key={habit.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <div className="text-lg mr-3">{habit.icon || '🎯'}</div>
-                <div>
-                  <div className="font-medium text-gray-800">{habit.name}</div>
-                  <div className="text-sm text-gray-600">{habit.completionCount} completions</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-green-600">{habit.completionRate}%</div>
-                <div className="text-xs text-gray-500">completion rate</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Monthly Progress Chart */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">📈 Monthly Progress</h3>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="flex items-end space-x-1 h-20">
-            {monthlyCompletions.slice(-14).map((completed, index) => {
-              const height = totalHabits > 0 ? (completed / totalHabits) * 100 : 0;
-              const isToday = index === monthlyCompletions.slice(-14).length - 1;
-
-              return (
-                <div key={index} className="flex-1 flex flex-col items-center">
-                  <div
-                    className={`w-full bg-gradient-to-t from-blue-400 to-blue-600 rounded-t transition-all duration-500 ${
-                      isToday ? 'from-green-400 to-green-600' : ''
-                    }`}
-                    style={{ height: `${Math.max(height, 5)}%` }}
-                  />
-                  <div className={`text-xs mt-1 ${isToday ? 'font-bold text-green-600' : 'text-gray-500'}`}>
-                    {new Date(currentYear, currentMonth, index + (daysInMonth - 13)).getDate()}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Top Performing Habits */}
+        <section className="card">
+          <h2 className="eyebrow mb-3">Top habits</h2>
+          {topHabits.length === 0 ? (
+            <p className="text-sm text-ash">Add a habit to see how it performs.</p>
+          ) : (
+            <ol className="divide-y divide-hairline">
+              {topHabits.map((habit, index) => (
+                <li key={habit.id} className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <span className="eyebrow w-5 shrink-0">0{index + 1}</span>
+                    <div className="min-w-0">
+                      <div className="truncate">{habit.name}</div>
+                      <div className="text-sm text-ash">{habit.completionCount} completions</div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                  <div className="shrink-0 text-right">
+                    <div className="text-subheading">{habit.completionRate}%</div>
+                    <div className="eyebrow">completion rate</div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        {/* Monthly Progress Chart */}
+        <section className="card">
+          <h2 className="eyebrow mb-3">Last 14 days</h2>
+          <div className="rounded-xl bg-bone p-4">
+            <div className="flex h-32 items-end gap-1">
+              {monthlyCompletions.slice(-14).map((completed, index) => {
+                const height = totalHabits > 0 ? (completed / totalHabits) * 100 : 0;
+                const isToday = index === monthlyCompletions.slice(-14).length - 1;
+
+                return (
+                  <div key={index} className="flex h-full flex-1 flex-col items-center justify-end">
+                    <div
+                      className={`w-full rounded-t-md transition-[height] duration-500 ease-out ${
+                        isToday ? 'bg-highlighter ring-1 ring-ink' : completed > 0 ? 'bg-ink' : 'bg-smoke'
+                      }`}
+                      style={{ height: `${Math.max(height, 5)}%` }}
+                    />
+                    <div className={`mt-2 text-caption ${isToday ? 'text-ink' : 'text-ash'}`}>
+                      {new Date(currentYear, currentMonth, index + (daysInMonth - 13)).getDate()}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="text-center text-sm text-gray-600 mt-2">
-            Last 14 days • {monthlyCompletionRate}% average completion rate
-          </div>
-        </div>
+          <p className="mt-3 text-sm text-ash">
+            {monthlyCompletionRate}% average completion this month
+          </p>
+        </section>
       </div>
     </div>
   );

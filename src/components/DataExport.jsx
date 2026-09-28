@@ -1,4 +1,4 @@
-function DataExport({ habits, completions }) {
+function DataExport({ habits, completions, onClearAll }) {
   const exportData = () => {
     const data = {
       habits,
@@ -47,73 +47,48 @@ function DataExport({ habits, completions }) {
 
   const clearAllData = () => {
     if (window.confirm('Are you sure you want to clear all habit data? This action cannot be undone.')) {
-      localStorage.removeItem('habits');
-      localStorage.removeItem('completions');
-      alert('All data cleared. Please refresh the page.');
+      onClearAll();
     }
   };
 
+  const rows = [
+    {
+      label: 'Export backup',
+      detail: 'Download your habits and progress as a JSON file.',
+      action: <button onClick={exportData} className="btn btn-outline btn-sm">Export</button>,
+    },
+    {
+      label: 'Import backup',
+      detail: 'Upload a previously exported backup file.',
+      action: (
+        <label className="btn btn-outline btn-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink">
+          Choose file
+          <input type="file" accept=".json" onChange={importData} className="sr-only" />
+        </label>
+      ),
+    },
+    {
+      label: 'Clear all data',
+      detail: 'Permanently delete this profile’s habits and progress.',
+      action: <button onClick={clearAllData} className="btn btn-outline btn-sm">Clear</button>,
+    },
+  ];
+
   return (
-    <div className="mb-6 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
-      <div className="flex items-center mb-6">
-        <div className="text-2xl mr-3">💾</div>
-        <h2 className="text-2xl font-semibold text-gray-800">Data Management</h2>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Export Data */}
-        <div className="text-center">
-          <button
-            onClick={exportData}
-            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
-          >
-            📤 Export Data
-          </button>
-          <p className="text-sm text-gray-600 mt-2">
-            Download your habits and progress as a JSON file
-          </p>
-        </div>
-
-        {/* Import Data */}
-        <div className="text-center">
-          <label className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg cursor-pointer block">
-            📥 Import Data
-            <input
-              type="file"
-              accept=".json"
-              onChange={importData}
-              className="hidden"
-            />
-          </label>
-          <p className="text-sm text-gray-600 mt-2">
-            Upload a previously exported backup file
-          </p>
-        </div>
-
-        {/* Clear Data */}
-        <div className="text-center">
-          <button
-            onClick={clearAllData}
-            className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
-          >
-            🗑️ Clear All Data
-          </button>
-          <p className="text-sm text-gray-600 mt-2">
-            Permanently delete all habits and progress
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <h3 className="font-semibold text-blue-800 mb-2">💡 Data Management Tips</h3>
-        <ul className="text-sm text-blue-700 space-y-1">
-          <li>• Export your data regularly to create backups</li>
-          <li>• Imported data will merge with existing habits</li>
-          <li>• Clear data action cannot be undone</li>
-          <li>• All data is stored locally in your browser</li>
-        </ul>
-      </div>
-    </div>
+    <section aria-labelledby="data-label" className="card p-0 sm:p-0">
+      <h2 id="data-label" className="eyebrow px-4 pt-4 sm:px-5">Data · stored in this browser</h2>
+      <ul className="divide-y divide-hairline">
+        {rows.map(row => (
+          <li key={row.label} className="flex items-center justify-between gap-4 px-4 py-4 sm:px-5">
+            <div className="min-w-0">
+              <p>{row.label}</p>
+              <p className="text-sm text-ash">{row.detail}</p>
+            </div>
+            <div className="shrink-0">{row.action}</div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

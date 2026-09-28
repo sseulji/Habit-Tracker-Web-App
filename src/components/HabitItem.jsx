@@ -17,81 +17,84 @@ function HabitItem({ habit, isCompletedToday, streak, onToggleComplete, onEdit, 
     setIsEditing(false);
   };
 
-  return (
-    <div className={`p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 mb-4 ${isCompletedToday ? 'ring-2 ring-green-300 animate-celebrate' : ''}`}>
-      {isEditing ? (
-        <form onSubmit={handleEditSubmit}>
+  if (isEditing) {
+    return (
+      <form onSubmit={handleEditSubmit} className="card p-4 sm:p-5">
+        <div className="grid gap-3 sm:grid-cols-2">
           <input
             type="text"
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="field"
+            aria-label="Habit name"
+            autoFocus
             required
           />
           <input
             type="text"
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="field"
+            aria-label="Description"
             placeholder="Description"
           />
-          <div className="flex space-x-3">
-            <button type="submit" className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
-              ✓ Save
-            </button>
-            <button type="button" onClick={handleEditCancel} className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
-              ✕ Cancel
-            </button>
-          </div>
-        </form>
-      ) : (
-        <>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center flex-1">
-              <button
-                onClick={() => onToggleComplete(habit.id)}
-                className={`w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl transition-all duration-300 mr-4 ${
-                  isCompletedToday
-                    ? 'bg-green-500 border-green-500 text-white transform scale-110'
-                    : 'hover:border-blue-400 hover:scale-105'
-                }`}
-              >
-                {isCompletedToday ? '✓' : habit.icon || '○'}
-              </button>
-              <div className="flex-1">
-                <h3 className={`text-lg font-semibold ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                  {habit.name}
-                </h3>
-                {habit.description && (
-                  <p className={`text-sm ${isCompletedToday ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {habit.description}
-                  </p>
-                )}
-                <div className="flex items-center mt-2">
-                  <span className="text-sm text-gray-500 mr-2">🔥</span>
-                  <span className="text-sm font-medium text-orange-600">{streak} day streak</span>
-                  {streak >= 7 && <span className="ml-2 text-yellow-500">⭐</span>}
-                  {streak >= 30 && <span className="ml-1 text-purple-500">👑</span>}
-                </div>
-              </div>
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg transition-colors duration-200 text-sm"
-              >
-                ✏️ Edit
-              </button>
-              <button
-                onClick={() => onDelete(habit.id)}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg transition-colors duration-200 text-sm"
-              >
-                🗑️ Delete
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <button type="submit" className="btn btn-primary btn-sm px-4">
+            Save
+          </button>
+          <button type="button" onClick={handleEditCancel} className="btn btn-ghost btn-sm">
+            Cancel
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-2xl border bg-paper p-3 transition-colors duration-300 ease-out sm:gap-4 sm:p-4 ${
+        isCompletedToday ? 'border-ink' : 'border-hairline'
+      }`}
+    >
+      <button
+        onClick={() => onToggleComplete(habit.id)}
+        aria-pressed={isCompletedToday}
+        aria-label={`${isCompletedToday ? 'Mark as not done' : 'Mark as done'}: ${habit.name}`}
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-input border text-xl transition-colors duration-300 ease-out ${
+          isCompletedToday
+            ? 'border-ink bg-highlighter text-ink'
+            : 'border-hairline bg-bone hover:border-ink'
+        }`}
+      >
+        {isCompletedToday ? (
+          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M4 10.5l4 4 8-9" />
+          </svg>
+        ) : (
+          <span aria-hidden="true" className="grayscale opacity-70">{habit.icon || '○'}</span>
+        )}
+      </button>
+
+      <div className="min-w-0 flex-1">
+        <p className={`break-words ${isCompletedToday ? 'text-ash line-through' : 'text-ink'}`}>
+          {habit.name}
+        </p>
+        <p className="break-words text-sm text-ash">
+          {habit.description && <>{habit.description} · </>}
+          <span className={streak > 0 ? 'text-ink' : ''}>{streak} {streak === 1 ? 'day' : 'days'} streak</span>
+          {streak >= 30 ? ' · 30+ days' : streak >= 7 ? ' · 7+ days' : ''}
+        </p>
+      </div>
+
+      <div className="flex shrink-0">
+        <button onClick={() => setIsEditing(true)} aria-label={`Edit ${habit.name}`} className="btn btn-ghost btn-sm px-2 sm:px-3">
+          Edit
+        </button>
+        <button onClick={() => onDelete(habit.id)} aria-label={`Delete ${habit.name}`} className="btn btn-ghost btn-sm px-2 text-ash hover:text-ink sm:px-3">
+          Delete
+        </button>
+      </div>
     </div>
   );
 }
