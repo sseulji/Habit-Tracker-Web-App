@@ -25,16 +25,16 @@ export async function announce(user, changed, at = Date.now()) {
     if (p.cancelled) {
       await notify(user, {
         kind: 'cancel', placementId: p.id,
-        title: `${habit.name}: 오늘은 시간이 없어요`,
+        title: `${habit.name}: no time today`,
         body: p.reason,
-        actions: p.mode === 'rest' ? [{ action: 'rest', title: '쉬는 날로 기록' }] : [],
+        actions: p.mode === 'rest' ? [{ action: 'rest', title: 'Take rest day' }] : [],
       }, at);
     } else if (p.lockedConflict) {
       await notify(user, {
         kind: 'cancel', placementId: p.id,
-        title: `${habit.name}: 정한 시간에 일정이 생겼어요`,
-        body: `${formatMinutes(p.start)}에 일정이 겹쳐요. 다른 시간으로 옮길까요?`,
-        actions: [{ action: 'auto', title: '자동으로 옮기기' }],
+        title: `${habit.name}: your set time is now busy`,
+        body: `A meeting now overlaps ${formatMinutes(p.start)}. Move it?`,
+        actions: [{ action: 'auto', title: 'Move it for me' }],
       }, at);
     }
   }
@@ -44,21 +44,21 @@ export async function sendMorning(user, at = Date.now()) {
   const now = nowFor(user, at);
   const plan = all(`SELECT habit_id, start, mode FROM placements WHERE user_id = ? AND date = ? AND start IS NOT NULL ORDER BY start`, user.id, now.date);
   const body = plan.length
-    ? plan.map(p => `${habitName(p.habit_id).name} ${formatMinutes(p.start)}${p.mode === 'min' ? '(최소)' : ''}`).join(' · ')
-    : '오늘 잡힌 습관이 없어요.';
-  return notify(user, { kind: 'morning', title: '오늘 계획', body }, at);
+    ? plan.map(p => `${habitName(p.habit_id).name} ${formatMinutes(p.start)}${p.mode === 'min' ? ' (min)' : ''}`).join(' · ')
+    : 'Nothing planned today.';
+  return notify(user, { kind: 'morning', title: 'Today’s plan', body }, at);
 }
 
 export async function sendRecap(user, at = Date.now()) {
-  return notify(user, { kind: 'recap', title: '오늘 요약', body: dailyRecap(user, at).body }, at);
+  return notify(user, { kind: 'recap', title: 'Today', body: dailyRecap(user, at).body }, at);
 }
 
 export async function sendWeekly(user, at = Date.now()) {
   const summary = weeklySummary(user, nowFor(user, at).date);
   saveWeeklySummary(user, summary);
   const rate = summary.planned ? Math.round((summary.kept / summary.planned) * 100) : 0;
-  const body = `이번 주 ${summary.kept}/${summary.planned} 지킴(${rate}%), 최소 버전 ${summary.min}번.` + (summary.suggestion ? ` ${summary.suggestion.text}` : '');
-  return notify(user, { kind: 'weekly', title: '주간 요약', body }, at);
+  const body = `This week: ${summary.kept}/${summary.planned} kept (${rate}%), ${summary.min} as the minimum.` + (summary.suggestion ? ` ${summary.suggestion.text}` : '');
+  return notify(user, { kind: 'weekly', title: 'Your week', body }, at);
 }
 
 async function sendStarts(user, now, at) {
@@ -69,16 +69,16 @@ async function sendStarts(user, now, at) {
     run('UPDATE placements SET notified = 1 WHERE id = ?', p.id);
     const habit = habitName(p.habit_id);
     const what = p.mode === 'min'
-      ? `오늘은 ${habit.minName || '최소 버전'} ${habit.minDuration}분`
-      : `${habit.duration}분`;
+      ? `Today: ${habit.minName || 'the minimum version'}, ${habit.minDuration} min`
+      : `${habit.duration} min`;
     await notify(user, {
       kind: 'start', placementId: p.id,
       title: `${habit.name} · ${formatMinutes(p.start)}`,
       body: p.change_note && p.reason ? `${p.reason}. ${what}` : what,
       actions: [
-        { action: p.mode === 'min' ? 'min' : 'done', title: '완료' },
-        { action: 'snooze', title: '30분 뒤' },
-        ...(p.mode === 'full' ? [{ action: 'min', title: '최소 버전 완료' }] : []),
+        { action: p.mode === 'min' ? 'min' : 'done', title: 'Done' },
+        { action: 'snooze', title: 'In 30 min' },
+        ...(p.mode === 'full' ? [{ action: 'min', title: 'Did the minimum' }] : []),
       ],
     }, at);
   }

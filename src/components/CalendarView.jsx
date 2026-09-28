@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { localDate } from '../time';
 
-function CalendarView({ completions, habits }) {
+// completions: { habitId: { 'YYYY-MM-DD': 'full' | 'min' | 'rest' } }; today: local date string
+function CalendarView({ completions, habits, today }) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getDaysInMonth = (date) => {
@@ -29,12 +31,13 @@ function CalendarView({ completions, habits }) {
   const getCompletionStatus = (date) => {
     if (!date) return null;
 
-    const dateStr = date.toISOString().split('T')[0];
-    const totalHabits = habits.length;
-    const completedHabits = habits.filter(habit =>
-      (completions[habit.id] || []).includes(dateStr)
-    ).length;
+    const dateStr = localDate(date);
+    if (dateStr > today) return null;
+    const due = habits.filter(habit => habit.days.includes(date.getDay()) && habit.createdAt.slice(0, 10) <= dateStr);
+    const totalHabits = due.length;
+    const completedHabits = due.filter(habit => completions[habit.id]?.[dateStr]).length;
 
+    if (totalHabits === 0) return null;
     if (completedHabits === 0) return 'none';
     if (completedHabits === totalHabits) return 'full';
     return 'partial';
@@ -92,12 +95,12 @@ function CalendarView({ completions, habits }) {
 
         {days.map((date, index) => {
           const status = getCompletionStatus(date);
-          const isToday = date && date.toDateString() === new Date().toDateString();
+          const isToday = date && localDate(date) === today;
 
           return (
             <div
               key={index}
-              title={date ? `${date.toDateString()}: ${statusLabels[status]}` : undefined}
+              title={date ? `${date.toDateString()}${status ? `: ${statusLabels[status]}` : ""}` : undefined}
               className={`relative aspect-square rounded-md p-1 text-sm sm:p-2 ${
                 !date ? '' :
                 status === 'full' ? 'bg-highlighter' : 'hover:bg-bone'
@@ -108,7 +111,7 @@ function CalendarView({ completions, habits }) {
                   <span className={isToday ? 'text-ink' : status === 'full' ? 'text-ink' : 'text-ink/80'}>
                     {date.getDate()}
                   </span>
-                  {status !== 'full' && (
+                  {status && status !== 'full' && (
                     <span
                       aria-hidden="true"
                       className={`absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full sm:bottom-2 sm:right-2 ${

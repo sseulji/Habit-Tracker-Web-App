@@ -86,7 +86,7 @@ export function ensurePlan(user, at = Date.now()) {
     for (const p of plan) {
       const mode = p.mode === 'unplaced' ? (restAvailable(p.habitId, now.date) ? 'rest' : 'missed') : p.mode;
       const reason = p.mode === 'unplaced'
-        ? (mode === 'rest' ? '오늘은 빈 시간이 없어요. 쉬는 날로 기록할까요?' : '오늘은 빈 시간이 없고, 이번 주 쉬는 날도 이미 썼어요')
+        ? (mode === 'rest' ? 'No free time today. Use this week’s rest day?' : 'No free time today, and this week’s rest day is used')
         : p.reason;
       run(`INSERT INTO placements (user_id, habit_id, date, start, end, mode, locked, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         user.id, p.habitId, now.date, p.start, p.end, mode, p.locked ? 1 : 0, reason);
@@ -163,27 +163,32 @@ const placementLength = (user, p) => {
   return p.mode === 'min' ? habit.minDuration : habit.duration;
 };
 
-// "30분 뒤": once a day it simply shifts by 30 minutes; after that the conflict rules decide.
+// "In 30 min": once a day it simply shifts by 30 minutes; after that the conflict rules decide.
 export function snooze(user, p, at = Date.now()) {
   const now = nowFor(user, at);
   const habit = toHabit(one('SELECT * FROM habits WHERE id = ?', p.habit_id));
   const length = placementLength(user, p);
-  const start = Math.ceil((now.minutes + 30) / 5) * 5;
+  const settings = settingsFor(user);
+  // 30 minutes after the later of now and the planned start — snoozing never pulls a habit earlier.
+  const start = Math.ceil((Math.max(now.minutes, p.start ?? now.minutes) + 30) / 5) * 5;
   const busy = getBusy(user, p.date);
   const others = placementsOn(user, p.date).filter(o => o.id !== p.id && o.start != null && ['full', 'min'].includes(o.mode));
   const candidate = { start, end: start + length };
-  const free = candidate.end <= user.day_end && !overlapsBusy(candidate, busy) && !overlapsBusy(candidate, others);
+  const padded = (list, pad) => list.map(b => ({ start: b.start - pad, end: b.end + pad }));
+  const free = candidate.end <= settings.dayEnd
+    && !overlapsBusy(candidate, padded(busy, settings.buffer))
+    && !overlapsBusy(candidate, padded(others, settings.gap));
   const prev = JSON.stringify({ start: p.start, end: p.end, mode: p.mode });
 
   if (!p.snoozed && free) {
     run(`UPDATE placements SET start = ?, end = ?, snoozed = 1, notified = 0, change_note = 0, prev = ?, reason = ? WHERE id = ?`,
-      candidate.start, candidate.end, prev, `30분 뒤(${formatMinutes(start)})로 미뤘어요`, p.id);
+      candidate.start, candidate.end, prev, `Snoozed to ${formatMinutes(start)}`, p.id);
     return { cancelled: false };
   }
   const next = resolveConflict({
     placement: { ...p, start: now.minutes, end: now.minutes + length }, habit, busy,
-    others: others.map(o => ({ start: o.start, end: o.end })), now: now.minutes + 30,
-    restAvailable: restAvailable(p.habit_id, p.date), settings: settingsFor(user),
+    others: others.map(o => ({ start: o.start, end: o.end })), now: start,
+    restAvailable: restAvailable(p.habit_id, p.date), settings,
   });
   run(`UPDATE placements SET start = ?, end = ?, mode = ?, moves = ?, reason = ?, prev = ?, snoozed = 1, notified = 0, change_note = 0 WHERE id = ?`,
     next.start, next.end, next.mode, next.moves, next.reason, prev, p.id);
@@ -196,7 +201,7 @@ export function undo(user, p) {
   const prev = JSON.parse(p.prev);
   const conflict = prev.start != null && overlapsBusy(prev, getBusy(user, p.date)) ? 1 : 0;
   run(`UPDATE placements SET start = ?, end = ?, mode = ?, prev = NULL, locked = 1, conflict = ?, notified = 0, change_note = 0, reason = ? WHERE id = ?`,
-    prev.start, prev.end, prev.mode, conflict, '되돌렸어요. 이 시간은 자동으로 옮기지 않아요', p.id);
+    prev.start, prev.end, prev.mode, conflict, 'Restored. This time will not move automatically', p.id);
   return true;
 }
 
@@ -207,7 +212,7 @@ export function setTime(user, p, start) {
   const next = { start, end: start + length };
   const conflict = overlapsBusy(next, getBusy(user, p.date)) ? 1 : 0;
   run(`UPDATE placements SET start = ?, end = ?, mode = ?, locked = 1, conflict = ?, notified = 0, change_note = 0, prev = NULL, reason = ? WHERE id = ?`,
-    next.start, next.end, mode, conflict, `직접 ${formatMinutes(start)}로 정했어요`, p.id);
+    next.start, next.end, mode, conflict, `You set ${formatMinutes(start)}`, p.id);
   if (!['full', 'min'].includes(p.mode)) run(`DELETE FROM completions WHERE habit_id = ? AND date = ? AND kind = 'rest'`, p.habit_id, p.date);
 }
 
@@ -289,15 +294,15 @@ export function dailyRecap(user, at = Date.now()) {
   const min = kinds.filter(k => k === 'min').length;
   const rest = kinds.filter(k => k === 'rest').length;
   const tomorrow = tomorrowPreview(user, at);
-  const parts = [`${kept}/${due.length} 지킴`];
-  if (min) parts.push(`${min}개는 최소 버전`);
-  if (rest) parts.push(`${rest}개는 쉬는 날`);
-  const body = `${parts.join(' · ')}.` + (tomorrow ? ` 내일 첫 습관: ${tomorrow.name} ${formatMinutes(tomorrow.start)}` : '');
+  const parts = [`${kept}/${due.length} kept`];
+  if (min) parts.push(`${min} as the minimum`);
+  if (rest) parts.push(`${rest} rest`);
+  const body = `${parts.join(' · ')}.` + (tomorrow ? ` Tomorrow starts with ${tomorrow.name} at ${formatMinutes(tomorrow.start)}.` : '');
   return { due: due.length, kept, min, rest, body };
 }
 
 const BUCKETS = [['morning', ...WINDOWS.morning], ['lunch', ...WINDOWS.lunch], ['evening', ...WINDOWS.evening]];
-const BUCKET_LABEL = { morning: '아침', lunch: '점심', evening: '저녁' };
+const BUCKET_LABEL = { morning: 'morning', lunch: 'lunch', evening: 'evening' };
 const bucketOf = (minutes) => BUCKETS.find(([, s, e]) => minutes >= s && minutes < e)?.[0] || null;
 
 // The week ending on `date`: completion by time of day, minimum-version share, one suggestion.
@@ -337,7 +342,7 @@ export function weeklySummary(user, date) {
       if (r != null && r < 0.5 && rate(buckets[best]) - r >= 0.3) {
         suggestion = {
           habitId: h.id, window: best,
-          text: `${h.name}: ${BUCKET_LABEL[current]}에는 ${stats[current].planned}번 중 ${stats[current].kept}번 지켰어요. 다음 주는 ${BUCKET_LABEL[best]}에 배치할까요?`,
+          text: `${h.name}: kept ${stats[current].kept} of ${stats[current].planned} in the ${BUCKET_LABEL[current]}. Plan it in the ${BUCKET_LABEL[best]} next week?`,
         };
         break;
       }

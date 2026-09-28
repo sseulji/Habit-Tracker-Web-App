@@ -1,6 +1,6 @@
 // Placement engine (pure): puts habits into a day's free time and resolves
 // calendar conflicts by moving → shrinking to the minimum version → suggesting a rest day.
-// Times are minutes since local midnight. See the PRD section "배치·재배치 규칙".
+// Times are minutes since local midnight. See the PRD section on placement rules.
 import { formatMinutes } from './tz.js';
 
 export const DEFAULT_SETTINGS = {
@@ -94,18 +94,18 @@ export function planDay({ habits, busy, placed = [], from, settings = DEFAULT_SE
       if (start != null) {
         placement = {
           start, duration: habit.duration, mode: 'full', locked: false,
-          reason: habit.fixedStart != null ? `정한 시간(${formatMinutes(habit.fixedStart)})에 일정이 있어 옮겼어요` : null,
+          reason: habit.fixedStart != null ? `Your set time (${formatMinutes(habit.fixedStart)}) is busy, so it moved` : null,
         };
       }
     }
     if (!placement) {
       const start = findSlot(habit.minDuration, windowsFor(habit, settings), intervals, earliest, settings);
       if (start != null) {
-        placement = { start, duration: habit.minDuration, mode: 'min', locked: false, reason: '오늘은 시간이 부족해 최소 버전으로 잡았어요' };
+        placement = { start, duration: habit.minDuration, mode: 'min', locked: false, reason: 'Short on time today, so it is the minimum version' };
       }
     }
     if (!placement) {
-      out.push({ habitId: habit.id, start: null, end: null, mode: 'unplaced', locked: false, reason: '오늘은 빈 시간이 없어요' });
+      out.push({ habitId: habit.id, start: null, end: null, mode: 'unplaced', locked: false, reason: 'No free time today' });
       continue;
     }
     const end = placement.start + placement.duration;
@@ -133,7 +133,7 @@ export function resolveConflict({ placement, habit, busy, others, now, restAvail
     if (start != null) {
       return {
         start, end: start + habit.duration, mode: 'full', moves,
-        reason: was ? `일정 때문에 ${was} → ${formatMinutes(start)}로 옮겼어요` : `${formatMinutes(start)}에 잡았어요`,
+        reason: was ? `Moved ${was} → ${formatMinutes(start)} for a meeting` : `Placed at ${formatMinutes(start)}`,
       };
     }
   }
@@ -143,15 +143,15 @@ export function resolveConflict({ placement, habit, busy, others, now, restAvail
     return {
       start, end: start + habit.minDuration, mode: 'min', moves,
       reason: placement.moves >= settings.maxMoves && placement.mode === 'full'
-        ? `오늘 두 번 옮겨서 ${formatMinutes(start)}에 최소 버전으로 줄였어요`
-        : `시간이 부족해 ${formatMinutes(start)}에 최소 버전으로 줄였어요`,
+        ? `Already moved twice today, so it is the minimum version at ${formatMinutes(start)}`
+        : `Not enough time, so it is the minimum version at ${formatMinutes(start)}`,
     };
   }
 
   return {
     start: null, end: null, mode: restAvailable ? 'rest' : 'missed', moves,
     reason: restAvailable
-      ? '오늘은 빈 시간이 없어요. 쉬는 날로 기록할까요?'
-      : '오늘은 빈 시간이 없고, 이번 주 쉬는 날도 이미 썼어요',
+      ? 'No free time today. Use this week’s rest day?'
+      : 'No free time today, and this week’s rest day is used',
   };
 }

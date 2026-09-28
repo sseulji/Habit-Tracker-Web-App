@@ -38,15 +38,16 @@ A beautiful, modern web application to track your daily habits with gamification
 
 ## Tech Stack
 
-- **Frontend**: React 19.1.1 with Vite for fast development and building
-- **Styling**: TailwindCSS 4.1.14 for modern, utility-first CSS with custom animations
-- **Data Storage**: Browser localStorage (no backend required)
+- **Frontend**: React 19.1.1 with Vite for fast development and building, installable as a PWA
+- **Styling**: TailwindCSS 4.1.14 with the tokens in [design.md](design.md)
+- **Server**: Node.js + Express 5, SQLite via Node's built-in `node:sqlite`, web push via `web-push`
+- **Planning**: `server/planner.js` fits habits into free calendar time, then moves, shrinks to the minimum version, or suggests a rest day when a meeting lands (see the PRD)
+- **Calendar**: a demo calendar (or busy times you mark yourself); Google Calendar plugs into `server/calendar.js` once an OAuth client exists
 - **Language**: JavaScript (ES6+)
-- **Icons**: Unicode emojis for cross-platform compatibility
 
 ## 🚀 Quick Start
 
-Get started with the Habit Tracker in just a few minutes!
+Needs **Node.js 22.13 or newer** (for the built-in SQLite module).
 
 ```bash
 git clone https://github.com/TheUnknown550/Habit-Tracker-Web-App.git
@@ -55,7 +56,15 @@ npm install
 npm run dev
 ```
 
-Then open `http://localhost:5173` in your browser.
+`npm run dev` starts the API on port 8787 and the web app; open `http://localhost:5173/Habit-Tracker-Web-App/` and sign in with any demo name.
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | API (restarts on change) + Vite dev server |
+| `npm test` | Planner, time-zone and service tests |
+| `npm run build && npm start` | Production: one server on port 8787 serving the API and the built app |
+
+Data lives in `data/habits.db` (git-ignored). Push notification keys are generated on first start.
 
 📖 **Detailed Installation Guide**: See [INSTALLATION.md](INSTALLATION.md) for comprehensive setup instructions, troubleshooting, and alternative installation methods.
 
@@ -66,7 +75,9 @@ Then open `http://localhost:5173` in your browser.
 
 ## 🌐 Deployment
 
-This app is automatically deployed to GitHub Pages using GitHub Actions.
+> **Note:** the calendar-aware version needs its Node server (sign-in, planning, push). GitHub Pages only hosts static files, so a Pages deploy of this branch shows the sign-in screen but can't reach the API. Deploy it to a Node host instead (`npm run build && npm start`, HTTPS required for push).
+
+The original version was deployed to GitHub Pages using GitHub Actions.
 
 **Live Demo**: [https://theunknown550.github.io/Habit-Tracker-Web-App/](https://theunknown550.github.io/Habit-Tracker-Web-App/)
 

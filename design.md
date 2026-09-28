@@ -151,6 +151,14 @@ Paper, 1px Hairline(완료 시 Ink), 16px 반경, 패딩 12px / 16px(≥640px).
 - 완료된 이름: Ash + 취소선. 긴 텍스트는 잘라내지 않고 줄바꿈.
 - 수정은 카드 자리에서 인라인 폼으로(Save 노랑 / Cancel 고스트).
 
+### 오늘 일정(Agenda)
+Today 화면은 캘린더의 바쁜 시간과 배치된 습관을 시간순으로 한 목록에 섞어 보여준다.
+- 바쁜 시간: 점선 Smoke 테두리 행, `09:30–10:00 · Busy`(Ash). 직접 추가한 일정만 × 로 지울 수 있다. 제목은 표시하지 않는다.
+- 지금 표시: `NOW 21:45` 라벨 + 1px Ink 가로선, 끝나지 않은 첫 항목 바로 위.
+- 습관 카드: 이름 + `22:35–22:55 · 20 min`(Ash, tabular), 상태 태그(`Minimum · …`, `Moved`, `Fixed`, `Clashes with a meeting`), 바뀐 이유 한 줄. 다음 행동인 카드만 Ink 테두리.
+- 드러난 행동은 상황에 맞는 것만: `Move it for me`(충돌), `Take rest day`, `Pick a time`, `Undo change`. 나머지(`In 30 minutes`, `Did the minimum`, `Change time`, 수정·삭제)는 ⋯ 메뉴.
+- 시간이 없는 습관은 `No time today`, 먼저 체크한 습관은 `Done today`, 오늘 요일이 아닌 습관은 `Not scheduled today` 목록으로.
+
 ### 새 습관 폼
 상단 바 `New habit` 또는 상태 바 `Add habit`으로 열리는 인라인 카드. 목록 위에 표시, 이름 필드 자동 포커스. ≥640px에서 이름·설명 2열. 추가하면 닫힌다.
 

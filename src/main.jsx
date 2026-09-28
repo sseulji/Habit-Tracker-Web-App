@@ -9,10 +9,12 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// Offline support. Only in production builds so the dev server's hot reload is never served from cache.
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+// Offline support and push notifications. In development the worker only handles push
+// (?dev=1 turns its cache off) so the dev server's hot reload is never served stale.
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((error) => {
+    const url = `${import.meta.env.BASE_URL}sw.js${import.meta.env.DEV ? '?dev=1' : ''}`
+    navigator.serviceWorker.register(url).catch((error) => {
       console.error('Service worker registration failed:', error)
     })
   })

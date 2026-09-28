@@ -1,10 +1,11 @@
-// SQLite storage (Node's built-in node:sqlite). One file under server/data/.
+// SQLite storage (Node's built-in node:sqlite). One file under data/ at the project root —
+// outside server/, so the dev watcher doesn't restart on every write.
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const file = process.env.DB_FILE || fileURLToPath(new URL('./data/habits.db', import.meta.url));
+const file = process.env.DB_FILE || fileURLToPath(new URL('../data/habits.db', import.meta.url));
 if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
 
 export const db = new DatabaseSync(file);

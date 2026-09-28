@@ -1,12 +1,24 @@
 import { useState } from 'react';
-import Avatar from './Avatar';
+import { api } from '../api';
+import { browserTimeZone } from '../time';
 
-function SignIn({ profiles, onSignIn, onCreateProfile }) {
+function SignIn({ onSignedIn }) {
   const [name, setName] = useState('');
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (name.trim()) onCreateProfile(name.trim());
+    if (!name.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { user } = await api.post('/auth/demo', { name: name.trim(), tz: browserTimeZone() });
+      onSignedIn(user);
+    } catch (err) {
+      setError(err.status ? err.message : 'Can’t reach the server. Is it running (npm run dev)?');
+      setBusy(false);
+    }
   };
 
   return (
@@ -20,30 +32,13 @@ function SignIn({ profiles, onSignIn, onCreateProfile }) {
         <div className="card">
           <h1 className="text-heading-sm mb-6">Sign in</h1>
 
-          {profiles.length > 0 && (
-            <div className="mb-6">
-              <p className="eyebrow mb-2">Profiles on this device</p>
-              <ul className="divide-y divide-hairline rounded-input border border-hairline">
-                {profiles.map(profile => (
-                  <li key={profile.id}>
-                    <button
-                      onClick={() => onSignIn(profile.id)}
-                      className="flex w-full items-center gap-3 px-3 py-3 text-left transition-colors duration-300 ease-out hover:bg-bone"
-                    >
-                      <Avatar name={profile.name} />
-                      <span className="min-w-0 flex-1 truncate">{profile.name}</span>
-                      <span aria-hidden="true" className="text-ash">→</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <button disabled className="btn btn-outline mb-2 w-full cursor-not-allowed opacity-40">
+            Continue with Google
+          </button>
+          <p className="mb-6 text-sm text-ash">Google sign-in and Calendar connect arrive together. For now, use a demo account.</p>
 
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="profile-name" className="eyebrow mb-2 block">
-              {profiles.length > 0 ? 'New profile' : 'Your name'}
-            </label>
+          <form onSubmit={handleSubmit} className="border-t border-hairline pt-6">
+            <label htmlFor="profile-name" className="eyebrow mb-2 block">Demo account name</label>
             <input
               id="profile-name"
               type="text"
@@ -51,17 +46,19 @@ function SignIn({ profiles, onSignIn, onCreateProfile }) {
               onChange={(e) => setName(e.target.value)}
               className="field mb-4"
               placeholder="e.g., Alex"
-              autoComplete="nickname"
+              autoComplete="off"
+              maxLength={40}
               required
             />
-            <button type="submit" className={`btn w-full ${profiles.length > 0 ? 'btn-outline' : 'btn-primary'}`}>
-              Create profile
+            <button type="submit" disabled={busy} className="btn btn-primary w-full">
+              {busy ? 'Signing in…' : 'Continue'}
             </button>
+            {error && <p role="alert" className="mt-3 text-sm">{error}</p>}
           </form>
         </div>
 
         <p className="mt-4 text-sm text-ash">
-          Profiles and habit data are saved in this browser only. No password is needed.
+          A demo account is just a name — anyone who types it can open it. Habits are stored on this app’s server.
         </p>
       </div>
     </div>
